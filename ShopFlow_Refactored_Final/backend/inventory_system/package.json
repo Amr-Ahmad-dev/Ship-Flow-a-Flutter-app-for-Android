@@ -1,0 +1,22 @@
+{
+  "name": "shopflow-inventory-system",
+  "version": "1.0.0",
+  "description": "System 1: The ONLY system allowed to read/write Firestore",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "deploy": "npm run build && firebase deploy --only functions",
+    "watch": "tsc --watch"
+  },
+  "engines": { "node": "18" },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^11.11.0",
+    "firebase-functions": "^4.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0",
+    "@types/node": "^18.18.0"
+  },
+  "private": true
+}

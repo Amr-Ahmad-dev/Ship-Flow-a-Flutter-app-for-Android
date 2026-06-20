@@ -1,0 +1,28 @@
+{
+  "name": "shopflow-sales-api",
+  "version": "1.0.0",
+  "description": "System 2: REST API middleman between Flutter and Inventory System",
+  "scripts": {
+    "start": "ts-node src/server.ts",
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start:prod": "node dist/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "express-rate-limit": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.16",
+    "@types/express": "^4.17.20",
+    "@types/jsonwebtoken": "^9.0.4",
+    "@types/node": "^18.18.0",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.0"
+  }
+}
