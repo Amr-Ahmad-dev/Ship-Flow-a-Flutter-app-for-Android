@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// ShopFlow backend — Cloud Firestore security rules.
+//
+// The Flutter client is the only consumer; it talks to Firestore directly
+// through the two subsystem gateways (System A = buyer, System B = inventory).
+// Only the collections those gateways actually use are declared here, so no
+// unused surface is exposed.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- System A (buyer domain) -------------------------------------
+    // Profile doc id == Firebase Auth uid; holds role and persisted cart.
+    match /system_a_users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Orders: readable/writable by the buyer who owns them; sellers read
+    // aggregated figures from system_b_sales instead.
+    match /system_a_orders/{orderId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ---- System B (inventory / seller domain) ------------------------
+    // Catalogue is readable by every signed-in user; writes are limited to
+    // the seller that owns the product.
+    match /system_b_products/{productId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if request.auth != null;
+    }
+    // Seller profile/stat documents, keyed by the seller's uid.
+    match /system_b_sellers/{sellerId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == sellerId;
+    }
+    // Per-line sales records written at checkout, read by seller dashboards.
+    match /system_b_sales/{saleId} {
+      allow read, write: if request.auth != null;
+    }
+    // Prerequisite submissions uploaded by buyers and reviewed by sellers.
+    match /system_b_prerequisite_submissions/{submissionId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

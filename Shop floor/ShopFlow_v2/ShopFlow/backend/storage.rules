@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Buyers upload prerequisite documents to
+// submissions/{buyerId}/{productId}/{timestamp}_{filename}
+// (see lib/services/submission_upload_service.dart). Any signed-in user may
+// read a submission so the reviewing seller can open it; only the owning
+// buyer may write into their own folder.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /submissions/{buyerId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == buyerId;
+    }
+  }
+}
