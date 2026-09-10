@@ -1,0 +1,114 @@
+// Login page — email/password sign-in handled by System A (Firebase Auth).
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/api_service.dart';
+import '../utils/constants.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailCtrl = TextEditingController();
+  final _passCtrl  = TextEditingController();
+  bool _loading = false;
+  bool _deleting = false;
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Logs in with the entered credentials and navigates to Home on success.
+  Future<void> _login() async {
+    setState(() => _loading = true);
+    try {
+      await context.read<ApiService>().login(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+      );
+      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  /// Prompts for confirmation, then wipes all data via [ApiService.deleteAllData].
+  Future<void> _deleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Everything?'),
+        content: const Text('This will wipe ALL data from System A and System B simultaneously. This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE ALL', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _deleting = true);
+      try {
+        await context.read<ApiService>().deleteAllData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All System Data Wiped Successfully')));
+        }
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      } finally {
+        if (mounted) setState(() => _deleting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.shopping_bag_outlined, size: 80, color: AppConstants.kPrimary),
+              const SizedBox(height: 16),
+              const Text('ShopFlow', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 32),
+              TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined))),
+              const SizedBox(height: 16),
+              TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline))),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _loading ? null : _login,
+                child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Login'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(onPressed: () => Navigator.pushNamed(context, '/register'), child: const Text('Sign up. "Seven up. "')),
+              
+              const Divider(height: 64),
+              
+              // REQUIREMENT: Delete All button
+              OutlinedButton.icon(
+                onPressed: _deleting ? null : _deleteAll,
+                icon: _deleting 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+                  : const Icon(Icons.delete_forever, color: Colors.red),
+                label: const Text('DELETE ALL SYSTEM DATA', style: TextStyle(color: Colors.red)),
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
